@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Gestión de Pedidos')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1"><i class="fas fa-receipt me-2"></i>Gestión de Pedidos</h2>
+                <p class="text-muted mb-0">Filtra pedidos por fecha de entrega y estado.</p>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/admin}">Volver al Dashboard</a>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/admin/pedidos}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Entrega</label>
+                        <input type="date" name="fecha" class="form-control" th:value="${fecha}" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Estado</label>
+                        <select name="estado" class="form-select">
+                            <option value="" th:selected="${estado == null || estado == ''}">Todos</option>
+                            <option value="PENDIENTE_PAGO" th:selected="${estado == 'PENDIENTE_PAGO'}">Pendiente Pago</option>
+                            <option value="PAGADO" th:selected="${estado == 'PAGADO'}">Pagado / Confirmado</option>
+                            <option value="EN_PREPARACION" th:selected="${estado == 'EN_PREPARACION'}">En Producción</option>
+                            <option value="LISTO_PARA_RECOJO" th:selected="${estado == 'LISTO_PARA_RECOJO'}">Listo para Recojo</option>
+                            <option value="EN_CAMINO" th:selected="${estado == 'EN_CAMINO'}">En Camino (Delivery)</option>
+                            <option value="ENTREGADO" th:selected="${estado == 'ENTREGADO'}">Entregado</option>
+                            <option value="CANCELADO" th:selected="${estado == 'CANCELADO'}">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a class="btn btn-outline-secondary w-100" th:href="@{/admin/pedidos}">Limpiar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle shadow-sm bg-white rounded">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Entrega</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${pedidos == null or #lists.isEmpty(pedidos)}">
+                        <td colspan="6" class="text-center py-4">No se encontraron pedidos.</td>
+                    </tr>
+                    <tr th:each="pedido : ${pedidos}">
+                        <td class="fw-bold" th:text="${pedido.id}">#000001</td>
+                        <td>
+                            <span th:text="${pedido.clienteEmail}">cliente@example.com</span>
+                        </td>
+                        <td>
+                            <span th:text="${pedido.fechaEntrega}">2025-05-01</span>
+                        </td>
+                        <td class="fw-bold text-success" th:text="${pedido.total}">S/ 0.00</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${pedido.estado == 'PENDIENTE_PAGO' ? ' bg-warning text-dark' : pedido.estado == 'PAGADO' ? ' bg-info text-dark' : pedido.estado == 'EN_PREPARACION' ? ' bg-primary' : pedido.estado == 'LISTO_PARA_RECOJO' ? ' bg-secondary' : pedido.estado == 'EN_CAMINO' ? ' bg-dark' : pedido.estado == 'ENTREGADO' ? ' bg-success' : pedido.estado == 'CANCELADO' ? ' bg-danger' : ''}"
+                                  th:text="${pedido.estado}">PENDIENTE_PAGO</span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/detallePedido/{id}(id=${pedido.id})}" title="Ver Detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-dark"
+                                        th:data-pedido-id="${pedido.id}"
+                                        th:data-pedido-estado="${pedido.estado}"
+                                        onclick="abrirModalEstado(this.dataset.pedidoId, this.dataset.pedidoEstado)"
+                                        title="Cambiar Estado">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEstado" tabindex="-1">
+        <div class="modal-dialog">
+            <form th:action="@{/admin/cambiarEstadoPedido}" method="post">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Actualizar Estado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id_pedido" id="modal_id_pedido" />
+                        <label class="form-label">Nuevo Estado:</label>
+                        <select name="estado" id="modal_select_estado" class="form-select">
+                            <option value="PENDIENTE_PAGO">PENDIENTE DE PAGO</option>
+                            <option value="PAGADO">PAGADO / CONFIRMADO</option>
+                            <option value="EN_PREPARACION">EN PRODUCCIÓN</option>
+                            <option value="LISTO_PARA_RECOJO">LISTO PARA RECOJO</option>
+                            <option value="EN_CAMINO">EN CAMINO (Delivery)</option>
+                            <option value="ENTREGADO">ENTREGADO (Finalizado)</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalEstado(id, estadoActual) {
+            document.getElementById('modal_id_pedido').value = id;
+            document.getElementById('modal_select_estado').value = estadoActual;
+            new bootstrap.Modal(document.getElementById('modalEstado')).show();
+        }
+    </script>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

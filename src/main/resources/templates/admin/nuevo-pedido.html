@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Nuevo Pedido')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-plus-circle me-2"></i>Crear Nuevo Pedido</h2>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/admin}">Cancelar</a>
+        </div>
+
+        <form method="post" th:action="@{/admin/registrarPedido}" id="formPedidoAdmin">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">1. Datos del Cliente</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Seleccionar Cliente</label>
+                                <select name="id_cliente" id="select_cliente" class="form-select" required>
+                                    <option value="">-- Buscar Cliente --</option>
+                                    <option th:each="cliente : ${clientes}"
+                                            th:value="${cliente.id}"
+                                            th:attr="data-rol=${cliente.rol != null ? cliente.rol.name() : 'CLIENTE'}"
+                                            th:text="${cliente.razonSocial != null ? cliente.razonSocial.valor + ' (' + cliente.nombreCompleto + ')' : cliente.nombreCompleto}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Comprobante</label>
+                                <select name="tipo_comprobante" id="tipo_comprobante" class="form-select">
+                                    <option value="BOLETA">BOLETA</option>
+                                    <option value="FACTURA">FACTURA</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-info text-dark">2. Entrega</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha Entrega</label>
+                                <input type="date" name="fecha_entrega" class="form-control"
+                                       min="[[${#dates.format(#dates.createNow().plusDays(1), 'yyyy-MM-dd')}]]"
+                                       value="[[${#dates.format(#dates.createNow().plusDays(1), 'yyyy-MM-dd')}]]" required>
+                                <small class="text-danger d-block mt-1" style="font-size: 0.8em;">
+                                    * Solo se permiten pedidos a partir de mañana para producción.
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Método</label>
+                                <select name="tipo_entrega" id="tipo_entrega" class="form-select">
+                                    <option value="RECOJO_TIENDA">Recojo en Tienda</option>
+                                    <option value="DOMICILIO">Delivery</option>
+                                </select>
+                            </div>
+                            <div class="alert alert-light small mt-2" id="info_recojo" style="display: block;">
+                                Recojo fijo en tienda: 05:00 a.m. a 12:00 p.m. (7 horas de rango).
+                            </div>
+                            <input type="hidden" name="ventana_entrega" value="05:00-12:00" />
+
+                            <div class="mb-3" id="div_direcciones" style="display:none;">
+                                <label class="form-label">Dirección del Cliente</label>
+                                <select name="id_direccion" id="id_direccion" class="form-select">
+                                    <option value="">Seleccione Cliente Primero</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-success">
+                        <div class="card-body text-center">
+                            <h5>Total Estimado</h5>
+                            <h2 class="text-success" id="total_display">S/ 0.00</h2>
+                            <small class="text-muted text-center d-block mb-3">*Precio del producto ya incluye IGV 18%, total final sin envío</small>
+                            <button type="submit" class="btn btn-success w-100 btn-lg">
+                                <i class="fas fa-check me-2"></i> Crear Pedido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">3. Selección de Productos</div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th style="width: 50%">Producto</th>
+                                            <th style="width: 25%">Precio</th>
+                                            <th style="width: 25%">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="producto : ${productos}" class="fila-producto" th:data-precio="${producto.precio.valor}">
+                                            <td>
+                                                <strong th:text="${producto.nombre}">Nombre</strong><br>
+                                                <small class="text-muted" th:text="${producto.categoria}">Categoría</small>
+                                            </td>
+                                            <td>
+                                                <strong th:text="${producto.precio.valor}">S/ 0.00</strong>
+                                            </td>
+                                            <td>
+                                                <input type="number"
+                                                       th:name="${'cantidades[' + producto.id + ']'}"
+                                                       class="form-control input-cantidad-admin"
+                                                       min="0" value="0" placeholder="0">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const BASE_URL = '';
+            const selectCliente = document.getElementById('select_cliente');
+            const selectDireccion = document.getElementById('id_direccion');
+            const selectTipoEntrega = document.getElementById('tipo_entrega');
+            const divDirecciones = document.getElementById('div_direcciones');
+            const selectComprobante = document.getElementById('tipo_comprobante');
+            const inputs = document.querySelectorAll('.input-cantidad-admin');
+            const display = document.getElementById('total_display');
+
+            function calcularTotal() {
+                let totalBruto = 0;
+                document.querySelectorAll('.fila-producto').forEach(fila => {
+                    const input = fila.querySelector('.input-cantidad-admin');
+                    const cantidad = parseFloat(input.value) || 0;
+                    const precio = parseFloat(fila.dataset.precio) || 0;
+
+                    if (cantidad > 0) {
+                        totalBruto += cantidad * precio;
+                        fila.classList.add('table-success');
+                    } else {
+                        fila.classList.remove('table-success');
+                    }
+                });
+                display.textContent = 'S/ ' + totalBruto.toFixed(2);
+            }
+
+            function cargarDirecciones(clienteId) {
+                selectDireccion.innerHTML = '<option value="">Cargando direcciones...</option>';
+                fetch('/admin/apiDirecciones/' + clienteId)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data || data.length === 0) {
+                            selectDireccion.innerHTML = '<option value="">El cliente no tiene direcciones</option>';
+                            return;
+                        }
+                        let html = '<option value="">Seleccione una dirección</option>';
+                        data.forEach(d => {
+                            const label = d.alias ? d.alias + ' - ' + d.calle + ' ' + d.numero + ' (' + d.distrito + ')' : d.calle + ' ' + d.numero + ' (' + d.distrito + ')';
+                            html += `<option value="${d.idDireccion}">${label}</option>`;
+                        });
+                        selectDireccion.innerHTML = html;
+                    })
+                    .catch(() => {
+                        selectDireccion.innerHTML = '<option value="">Error al cargar direcciones</option>';
+                    });
+            }
+
+            selectCliente.addEventListener('change', function() {
+                const idCliente = this.value;
+                const rol = this.options[this.selectedIndex].getAttribute('data-rol');
+
+                if (rol === 'ADMIN') {
+                    selectComprobante.value = 'FACTURA';
+                } else {
+                    selectComprobante.value = 'BOLETA';
+                }
+
+                if (idCliente) {
+                    cargarDirecciones(idCliente);
+                } else {
+                    selectDireccion.innerHTML = '<option value="">Seleccione Cliente Primero</option>';
+                }
+            });
+
+            selectTipoEntrega.addEventListener('change', function() {
+                if (this.value === 'DOMICILIO') {
+                    divDirecciones.style.display = 'block';
+                    selectDireccion.required = true;
+                    document.getElementById('info_recojo').style.display = 'none';
+                } else {
+                    divDirecciones.style.display = 'none';
+                    selectDireccion.required = false;
+                    document.getElementById('info_recojo').style.display = 'block';
+                }
+            });
+
+            inputs.forEach(input => {
+                input.addEventListener('input', calcularTotal);
+                input.addEventListener('focus', function() { this.select(); });
+            });
+        });
+    </script>
+</body>
+</html>
