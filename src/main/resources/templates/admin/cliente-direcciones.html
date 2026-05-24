@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Direcciones Cliente')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Direcciones de <span th:text="${cliente.nombreCompleto}">Cliente</span></h1>
+                <p class="text-muted">Gestiona las direcciones para delivery.</p>
+            </div>
+            <a class="btn btn-secondary" th:href="@{/admin/clientes}">Volver</a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="card mb-4">
+            <div class="card-header">Agregar Dirección</div>
+            <div class="card-body">
+                <form th:action="@{/admin/clientes/{id}/direcciones(id=${cliente.id})}" method="post">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Alias</label>
+                            <input type="text" name="alias" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Calle</label>
+                            <input type="text" name="calle" class="form-control" required />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Número</label>
+                            <input type="text" name="numero" class="form-control" />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Departamento</label>
+                            <select id="departamento_select" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Provincia</label>
+                            <select id="provincia_select" class="form-select"></select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Distrito</label>
+                            <select id="distrito_select" name="id_distrito" class="form-select"></select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Referencia</label>
+                            <input type="text" name="referencia" class="form-control" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">Agregar Dirección</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Direcciones Existentes</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Alias</th>
+                                <th>Dirección</th>
+                                <th>Referencia</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="d : ${direcciones}">
+                                <td th:text="${d.id}">1</td>
+                                <td th:text="${d.alias}">Tienda</td>
+                                <td th:text="${d.calle} + ' ' + ${d.numero} + ' (' + ${d.distrito} + ')'">Calle</td>
+                                <td th:text="${d.referencia}">Ref</td>
+                                <td>
+                                    <form th:action="@{/admin/clientes/{id}/direcciones/{dirId}/eliminar(id=${cliente.id},dirId=${d.id})}" method="post" class="d-inline">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <button class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${direcciones.size()} == 0">
+                                <td colspan="5" class="text-center">No hay direcciones.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const departamentoSelect = document.getElementById('departamento_select');
+            const provinciaSelect = document.getElementById('provincia_select');
+            const distritoSelect = document.getElementById('distrito_select');
+
+            function fetchJSON(url) {
+                return fetch(url).then(r => r.ok ? r.json() : Promise.reject(r.statusText));
+            }
+
+            function loadDepartamentos() {
+                fetchJSON('/admin/apiDepartamentos')
+                    .then(data => {
+                        departamentoSelect.innerHTML = '<option value="">Seleccione</option>' + data.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+                        provinciaSelect.innerHTML = '<option value="">Seleccione departamento</option>';
+                        distritoSelect.innerHTML = '<option value="">Seleccione provincia</option>';
+                    })
+                    .catch(() => { departamentoSelect.innerHTML = '<option value="">Error</option>'; });
+            }
+
+            departamentoSelect.addEventListener('change', function() {
+                const deptId = this.value;
+                if (!deptId) {
+                    provinciaSelect.innerHTML = '<option value="">Seleccione departamento</option>';
+                    distritoSelect.innerHTML = '<option value="">Seleccione provincia</option>';
+                    return;
+                }
+                fetchJSON('/admin/apiProvincias/' + deptId)
+                    .then(data => {
+                        provinciaSelect.innerHTML = '<option value="">Seleccione</option>' + data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+                        distritoSelect.innerHTML = '<option value="">Seleccione provincia</option>';
+                    }).catch(() => { provinciaSelect.innerHTML = '<option value="">Error</option>'; });
+            });
+
+            provinciaSelect.addEventListener('change', function() {
+                const provId = this.value;
+                if (!provId) {
+                    distritoSelect.innerHTML = '<option value="">Seleccione provincia</option>';
+                    return;
+                }
+                fetchJSON('/admin/apiDistritos/' + provId)
+                    .then(data => {
+                        distritoSelect.innerHTML = '<option value="">Seleccione</option>' + data.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+                    }).catch(() => { distritoSelect.innerHTML = '<option value="">Error</option>'; });
+            });
+
+            loadDepartamentos();
+        });
+    </script>
+</body>
+</html>
