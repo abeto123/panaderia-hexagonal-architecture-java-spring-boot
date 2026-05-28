@@ -51,6 +51,7 @@
                         <th>Cliente</th>
                         <th>Entrega</th>
                         <th>Total</th>
+                        <th>Tipo de Entrega</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -62,29 +63,41 @@
                     <tr th:each="pedido : ${pedidos}">
                         <td class="fw-bold" th:text="${pedido.id}">#000001</td>
                         <td>
-                            <span th:text="${pedido.clienteEmail}">cliente@example.com</span>
+                            <div class="fw-bold" th:text="${pedido.clienteNombreCompleto}">Cliente Nombre</div>
+                            <div class="text-muted small" th:text="${pedido.clienteEmail}">cliente@example.com</div>
                         </td>
                         <td>
                             <span th:text="${pedido.fechaEntrega}">2025-05-01</span>
                         </td>
-                        <td class="fw-bold text-success" th:text="${pedido.total}">S/ 0.00</td>
+                        <td class="fw-bold text-success">
+                            <div class="d-flex align-items-center gap-2">
+                                <span th:text="${pedido.total}">S/ 0.00</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-dark" th:text="${pedido.tipoEntrega}">DOMICILIO</span>
+                        </td>
                         <td>
                             <span class="badge"
                                   th:classappend="${pedido.estado == 'PENDIENTE_PAGO' ? ' bg-warning text-dark' : pedido.estado == 'PAGADO' ? ' bg-info text-dark' : pedido.estado == 'EN_PREPARACION' ? ' bg-primary' : pedido.estado == 'LISTO_PARA_RECOJO' ? ' bg-secondary' : pedido.estado == 'EN_CAMINO' ? ' bg-dark' : pedido.estado == 'ENTREGADO' ? ' bg-success' : pedido.estado == 'CANCELADO' ? ' bg-danger' : ''}"
                                   th:text="${pedido.estado}">PENDIENTE_PAGO</span>
                         </td>
                         <td>
-                            <div class="btn-group" role="group">
-                                <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/detallePedido/{id}(id=${pedido.id})}" title="Ver Detalles">
-                                    <i class="fas fa-eye"></i>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Acciones pedido">
+                                <a class="btn btn-outline-primary" th:href="@{/admin/detallePedido/{id}(id=${pedido.id})}" title="Ver Detalles">
+                                    <i class="fas fa-eye me-1"></i>Ver
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-dark"
+                                <button type="button" class="btn btn-outline-dark btn-estado"
                                         th:data-pedido-id="${pedido.id}"
                                         th:data-pedido-estado="${pedido.estado}"
-                                        onclick="abrirModalEstado(this.dataset.pedidoId, this.dataset.pedidoEstado)"
                                         title="Cambiar Estado">
-                                    <i class="fas fa-sync-alt"></i>
+                                    <i class="fas fa-sync-alt me-1"></i>Estado
                                 </button>
+                                <a class="btn btn-outline-danger" th:href="@{/admin/eliminarPedido/{id}(id=${pedido.id})}"
+                                   onclick="return confirm('¿Estás seguro de eliminar este pedido? Esta acción no se puede deshacer.')"
+                                   title="Eliminar Pedido">
+                                    <i class="fas fa-trash me-1"></i>Eliminar
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -93,42 +106,131 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalEstado" tabindex="-1">
-        <div class="modal-dialog">
+    <div id="modalEstado" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Actualizar Estado</h5>
+                <button type="button" class="btn-close" onclick="cerrarModal()"></button>
+            </div>
             <form th:action="@{/admin/cambiarEstadoPedido}" method="post">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Actualizar Estado</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="id_pedido" id="modal_id_pedido" />
-                        <label class="form-label">Nuevo Estado:</label>
-                        <select name="estado" id="modal_select_estado" class="form-select">
-                            <option value="PENDIENTE_PAGO">PENDIENTE DE PAGO</option>
-                            <option value="PAGADO">PAGADO / CONFIRMADO</option>
-                            <option value="EN_PREPARACION">EN PRODUCCIÓN</option>
-                            <option value="LISTO_PARA_RECOJO">LISTO PARA RECOJO</option>
-                            <option value="EN_CAMINO">EN CAMINO (Delivery)</option>
-                            <option value="ENTREGADO">ENTREGADO (Finalizado)</option>
-                            <option value="CANCELADO">CANCELADO</option>
-                        </select>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    </div>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="modal-body">
+                    <input type="hidden" name="id_pedido" id="modal_id_pedido" />
+                    <label class="form-label">Nuevo Estado:</label>
+                    <select name="estado" id="modal_select_estado" class="form-select">
+                        <option value="PENDIENTE_PAGO">PENDIENTE DE PAGO</option>
+                        <option value="PAGADO">PAGADO / CONFIRMADO</option>
+                        <option value="EN_PREPARACION">EN PRODUCCIÓN</option>
+                        <option value="LISTO_PARA_RECOJO">LISTO PARA RECOJO</option>
+                        <option value="EN_CAMINO">EN CAMINO (Delivery)</option>
+                        <option value="ENTREGADO">ENTREGADO (Finalizado)</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </form>
         </div>
     </div>
+    
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h5 {
+            margin: 0;
+        }
+        
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-close::before {
+            content: "×";
+        }
+        
+        .modal-body {
+            padding: 1rem;
+            flex-grow: 1;
+        }
+        
+        .modal-footer {
+            padding: 1rem;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+    </style>
 
     <script>
-        function abrirModalEstado(id, estadoActual) {
-            document.getElementById('modal_id_pedido').value = id;
-            document.getElementById('modal_select_estado').value = estadoActual;
-            new bootstrap.Modal(document.getElementById('modalEstado')).show();
+        function abrirModal(pedidoId, pedidoEstado) {
+            document.getElementById('modal_id_pedido').value = pedidoId;
+            document.getElementById('modal_select_estado').value = pedidoEstado;
+            document.getElementById('modalEstado').style.display = 'flex';
         }
+
+        function cerrarModal() {
+            document.getElementById('modalEstado').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer click fuera del contenido
+        document.addEventListener('click', function(e) {
+            var modal = document.getElementById('modalEstado');
+            if (e.target === modal) {
+                cerrarModal();
+            }
+        });
+
+        // Event listeners para botones
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-estado').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var pedidoId = this.getAttribute('data-pedido-id');
+                    var pedidoEstado = this.getAttribute('data-pedido-estado');
+                    abrirModal(pedidoId, pedidoEstado);
+                });
+            });
+        });
     </script>
 
     <footer th:replace="fragments/footer :: footer"></footer>

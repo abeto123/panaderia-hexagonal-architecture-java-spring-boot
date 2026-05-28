@@ -5,7 +5,9 @@ import com.panaderia.ecommerce.cliente.application.ClienteService;
 import com.panaderia.ecommerce.cliente.domain.Cliente;
 import com.panaderia.ecommerce.cliente.domain.Ruc;
 import com.panaderia.ecommerce.cliente.domain.RazonSocial;
+import com.panaderia.ecommerce.shared.infrastructure.pdf.ComprobanteService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
@@ -39,13 +43,16 @@ public class AdminController {
     private final ClienteService clienteService;
     private final ProductoService productoService;
     private final JdbcTemplate jdbcTemplate;
+    private final ComprobanteService comprobanteService;
 
     public AdminController(ClienteService clienteService,
                            ProductoService productoService,
-                           JdbcTemplate jdbcTemplate) {
+                           JdbcTemplate jdbcTemplate,
+                           ComprobanteService comprobanteService) {
         this.clienteService = clienteService;
         this.productoService = productoService;
         this.jdbcTemplate = jdbcTemplate;
+        this.comprobanteService = comprobanteService;
     }
 
     @GetMapping
@@ -112,17 +119,12 @@ public class AdminController {
     public RedirectView registrarPedido(@RequestParam Long id_cliente,
                                   @RequestParam String tipo_comprobante,
                                   @RequestParam String tipo_entrega,
-                                  @RequestParam(required = false) String ventana_entrega,
                                   @RequestParam String fecha_entrega,
                                   HttpServletRequest request,
                                   RedirectAttributes redirectAttributes) {
         try {
             Cliente cliente = clienteService.obtenerCliente(id_cliente)
                     .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
-
-            if ("RECOJO_TIENDA".equals(tipo_entrega)) {
-                ventana_entrega = "05:00-12:00";
-            }
 
             Map<Long, Integer> cantidades = extractCantidades(request);
             if (cantidades.values().stream().allMatch(q -> q <= 0)) {
@@ -447,14 +449,16 @@ public class AdminController {
 
     private List<PedidoResumen> loadRecentOrders() {
         try {
-            return jdbcTemplate.query("SELECT p.id_pedido, c.email, p.estado, p.fecha_entrega, p.costo_total " +
-                    "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente " +
-                    "ORDER BY p.fecha_registro DESC LIMIT 20", (rs, rowNum) -> new PedidoResumen(
+            return jdbcTemplate.query("SELECT p.id_pedido, CONCAT_WS(' ', c.nombre, c.apellidos) AS cliente_nombre_completo, c.email, p.estado, p.fecha_entrega, p.costo_total, p.tipo_entrega " +
+                            "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente " +
+                            "ORDER BY p.fecha_registro DESC LIMIT 20", (rs, rowNum) -> new PedidoResumen(
                     rs.getInt("id_pedido"),
+                    rs.getString("cliente_nombre_completo"),
                     rs.getString("email"),
                     rs.getString("estado"),
                     Optional.ofNullable(rs.getDate("fecha_entrega")).map(Date::toString).orElse("-"),
-                    rs.getBigDecimal("costo_total")
+                    rs.getBigDecimal("costo_total"),
+                    rs.getString("tipo_entrega")
             ));
         } catch (DataAccessException ex) {
             return List.of();
@@ -463,7 +467,7 @@ public class AdminController {
 
     private List<PedidoResumen> loadPedidos(String fechaEntrega, String estado) {
         try {
-            StringBuilder sql = new StringBuilder("SELECT p.id_pedido, c.email, p.estado, p.fecha_entrega, p.costo_total " +
+            StringBuilder sql = new StringBuilder("SELECT p.id_pedido, CONCAT_WS(' ', c.nombre, c.apellidos) AS cliente_nombre_completo, c.email, p.estado, p.fecha_entrega, p.costo_total, p.tipo_entrega " +
                     "FROM pedido p LEFT JOIN cliente c ON p.id_cliente = c.id_cliente");
             List<Object> params = new ArrayList<>();
 
@@ -480,10 +484,206 @@ public class AdminController {
 
             return jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> new PedidoResumen(
                     rs.getInt("id_pedido"),
+                    rs.getString("cliente_nombre_completo"),
                     rs.getString("email"),
                     rs.getString("estado"),
                     Optional.ofNullable(rs.getDate("fecha_entrega")).map(Date::toString).orElse("-"),
-                    rs.getBigDecimal("costo_total")
+                    rs.getBigDecimal("costo_total"),
+                    rs.getString("tipo_entrega")
+            ));
+        } catch (DataAccessException ex) {
+            return List.of();
+        }
+    }
+
+    @GetMapping("/detallePedido/{id}")
+    public String detallePedido(@PathVariable("id") Long pedidoId, Model model, RedirectAttributes redirectAttributes) {
+        Optional<PedidoDetalle> pedidoDetalle = loadPedidoDetalle(pedidoId);
+        if (pedidoDetalle.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No se encontró el pedido.");
+            return "redirect:/admin/pedidos";
+        }
+        model.addAttribute("pedido", pedidoDetalle.get());
+        model.addAttribute("detalles", loadPedidoDetalleItems(pedidoId));
+        return "admin/detalle-pedido";
+    }
+
+    @PostMapping("/actualizarPedido")
+    public RedirectView actualizarPedido(@RequestParam("id_pedido") Long pedidoId,
+                                         @RequestParam("estado") String estado,
+                                         @RequestParam("fecha_entrega") String fechaEntrega,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            Date fechaEntregaSql = null;
+            if (fechaEntrega != null && !fechaEntrega.isBlank()) {
+                fechaEntregaSql = Date.valueOf(fechaEntrega);
+            }
+            int updated = jdbcTemplate.update("UPDATE pedido SET estado = ?, fecha_entrega = ? WHERE id_pedido = ?",
+                    estado, fechaEntregaSql, pedidoId);
+            if (updated == 0) {
+                redirectAttributes.addFlashAttribute("error", "No se encontró el pedido.");
+            } else {
+                redirectAttributes.addFlashAttribute("success", "Pedido actualizado correctamente.");
+            }
+        } catch (DataAccessException ex) {
+            logger.error("Error actualizando pedido", ex);
+            redirectAttributes.addFlashAttribute("error", "No se pudo actualizar el pedido: " + ex.getMessage());
+        }
+        RedirectView redirectView = new RedirectView("/admin/detallePedido/" + pedidoId, true);
+        redirectView.setStatusCode(org.springframework.http.HttpStatus.SEE_OTHER);
+        return redirectView;
+    }
+
+    @GetMapping("/eliminarPedido/{id}")
+    public RedirectView eliminarPedido(@PathVariable("id") Long pedidoId, RedirectAttributes redirectAttributes) {
+        try {
+            int deleted = jdbcTemplate.update("DELETE FROM pedido WHERE id_pedido = ?", pedidoId);
+            if (deleted == 0) {
+                redirectAttributes.addFlashAttribute("error", "No se encontró el pedido.");
+            } else {
+                redirectAttributes.addFlashAttribute("success", "Pedido eliminado correctamente.");
+            }
+        } catch (DataAccessException ex) {
+            logger.error("Error eliminando pedido", ex);
+            redirectAttributes.addFlashAttribute("error", "No se pudo eliminar el pedido: " + ex.getMessage());
+        }
+        RedirectView redirectView = new RedirectView("/admin/pedidos", true);
+        redirectView.setStatusCode(org.springframework.http.HttpStatus.SEE_OTHER);
+        return redirectView;
+    }
+
+    @GetMapping("/descargarComprobante/{id}")
+    public void descargarComprobante(@PathVariable("id") Long pedidoId,
+                                     HttpServletResponse response) {
+        try {
+            response.setContentType("application/pdf");
+            response.setCharacterEncoding("UTF-8");
+            
+            // Obtener tipo de comprobante del pedido
+            String tipoComprobante = jdbcTemplate.queryForObject(
+                "SELECT tipo_comprobante FROM pedido WHERE id_pedido = ?",
+                new Object[]{pedidoId},
+                String.class
+            );
+
+            if (tipoComprobante == null) {
+                tipoComprobante = "comprobante";
+            }
+
+            // Generar el PDF
+            byte[] pdfBytes = comprobanteService.generarComprobante(pedidoId, tipoComprobante);
+            
+            String filename = tipoComprobante.toLowerCase() + "_pedido_" + pedidoId + ".pdf";
+            response.setHeader("Content-Disposition", 
+                "attachment; filename=" + filename);
+            response.setContentLength(pdfBytes.length);
+
+            OutputStream out = response.getOutputStream();
+            out.write(pdfBytes);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            logger.error("Error descargando comprobante", e);
+            try {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+            } catch (IOException ioEx) {
+                logger.error("Error sending error response", ioEx);
+            }
+        }
+    }
+
+    @GetMapping("/previsualizarComprobante/{id}")
+    public void previsualizarComprobante(@PathVariable("id") Long pedidoId,
+                                        HttpServletResponse response) {
+        try {
+            response.setContentType("application/pdf");
+            response.setCharacterEncoding("UTF-8");
+            
+            // Obtener tipo de comprobante del pedido
+            String tipoComprobante = jdbcTemplate.queryForObject(
+                "SELECT tipo_comprobante FROM pedido WHERE id_pedido = ?",
+                new Object[]{pedidoId},
+                String.class
+            );
+
+            if (tipoComprobante == null) {
+                tipoComprobante = "comprobante";
+            }
+
+            // Generar el PDF
+            byte[] pdfBytes = comprobanteService.generarComprobante(pedidoId, tipoComprobante);
+
+            String filename = tipoComprobante.toLowerCase() + "_pedido_" + pedidoId + ".pdf";
+            response.setHeader("Content-Disposition", 
+                "inline; filename=" + filename);
+            response.setContentLength(pdfBytes.length);
+
+            OutputStream out = response.getOutputStream();
+            out.write(pdfBytes);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            logger.error("Error previsualizando comprobante", e);
+            try {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+            } catch (IOException ioEx) {
+                logger.error("Error sending error response", ioEx);
+            }
+        }
+    }
+
+    private Optional<PedidoDetalle> loadPedidoDetalle(Long pedidoId) {
+        try {
+            return jdbcTemplate.query("SELECT p.id_pedido, p.fecha_registro, p.fecha_entrega, p.tipo_entrega, p.estado, " +
+                            "p.subtotal_productos, p.costo_envio, p.costo_total, c.nombre AS cliente_nombre, c.apellidos AS cliente_apellidos, c.email AS cliente_email, " +
+                            "c.telefono AS cliente_telefono, c.razon_social, c.ruc AS cliente_ruc, d.calle, d.numero, d.referencia, dist.nombre AS distrito_nombre " +
+                            "FROM pedido p " +
+                            "LEFT JOIN cliente c ON p.id_cliente = c.id_cliente " +
+                            "LEFT JOIN direccion d ON p.id_direccion_entrega = d.id_direccion " +
+                            "LEFT JOIN distrito dist ON d.id_distrito = dist.id_distrito " +
+                            "WHERE p.id_pedido = ?", new Object[]{pedidoId}, rs -> {
+                        if (rs.next()) {
+                            return Optional.of(new PedidoDetalle(
+                                    rs.getInt("id_pedido"),
+                                    rs.getString("cliente_nombre"),
+                                    rs.getString("cliente_apellidos"),
+                                    rs.getString("cliente_email"),
+                                    rs.getString("cliente_telefono"),
+                                    rs.getString("razon_social"),
+                                    rs.getString("cliente_ruc"),
+                                    Optional.ofNullable(rs.getTimestamp("fecha_registro")).map(ts -> ts.toLocalDateTime().toString()).orElse("-"),
+                                    Optional.ofNullable(rs.getDate("fecha_entrega")).map(Date::toString).orElse("-"),
+                                    rs.getString("tipo_entrega"),
+                                    rs.getString("estado"),
+                                    rs.getBigDecimal("subtotal_productos"),
+                                    rs.getBigDecimal("costo_envio"),
+                                    rs.getBigDecimal("costo_total"),
+                                    rs.getString("calle"),
+                                    rs.getString("numero"),
+                                    rs.getString("referencia"),
+                                    rs.getString("distrito_nombre")
+                            ));
+                        }
+                        return Optional.empty();
+                    });
+        } catch (DataAccessException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private List<PedidoDetalleItem> loadPedidoDetalleItems(Long pedidoId) {
+        try {
+            return jdbcTemplate.query("SELECT pp.id_producto, p.nombre, p.foto, pp.cantidad, pp.precio_unitario_congelado, pp.subtotal " +
+                    "FROM pedido_producto pp JOIN producto p ON pp.id_producto = p.id_producto " +
+                    "WHERE pp.id_pedido = ?", new Object[]{pedidoId}, (rs, rowNum) -> new PedidoDetalleItem(
+                    rs.getInt("id_producto"),
+                    rs.getString("nombre"),
+                    rs.getString("foto"),
+                    rs.getInt("cantidad"),
+                    rs.getBigDecimal("precio_unitario_congelado"),
+                    rs.getBigDecimal("subtotal")
             ));
         } catch (DataAccessException ex) {
             return List.of();
@@ -504,7 +704,30 @@ public class AdminController {
         }
     }
 
-    public record PedidoResumen(Integer id, String clienteEmail, String estado, String fechaEntrega, BigDecimal total) {
+    public record PedidoResumen(Integer id, String clienteNombreCompleto, String clienteEmail, String estado, String fechaEntrega, BigDecimal total, String tipoEntrega) {
+    }
+
+    public record PedidoDetalle(Integer id,
+                                String clienteNombre,
+                                String clienteApellidos,
+                                String clienteEmail,
+                                String clienteTelefono,
+                                String razonSocial,
+                                String clienteRuc,
+                                String fechaRegistro,
+                                String fechaEntrega,
+                                String tipoEntrega,
+                                String estado,
+                                BigDecimal subtotalProductos,
+                                BigDecimal costoEnvio,
+                                BigDecimal costoTotal,
+                                String calle,
+                                String numero,
+                                String referencia,
+                                String distritoNombre) {
+    }
+
+    public record PedidoDetalleItem(Integer productoId, String nombre, String foto, Integer cantidad, BigDecimal precioUnitario, BigDecimal subtotal) {
     }
 
     public record LowStockProducto(String nombre, Integer stock, Integer stockMinimo, String categoria) {

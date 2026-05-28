@@ -184,3 +184,13 @@ CREATE TABLE IF NOT EXISTS pack_producto (
   FOREIGN KEY (id_pack) REFERENCES producto(id_producto) ON DELETE CASCADE,
   FOREIGN KEY (id_componente) REFERENCES producto(id_producto) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS comprobante (
+  id_comprobante INT PRIMARY KEY AUTO_INCREMENT,
+  id_pedido INT UNIQUE,
+  numero_comprobante VARCHAR(50) UNIQUE,
+  tipo_comprobante ENUM('BOLETA', 'FACTURA'),
+  fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  archivo_path VARCHAR(500),
+  FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido) ON DELETE CASCADE
+);
