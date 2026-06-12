@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Producción')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Reporte de Producción</h1>
+                <p class="text-muted">Productos con bajo stock y necesidades de reposición.</p>
+            </div>
+            <a class="btn btn-primary" th:href="@{/admin}">Volver al Dashboard</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Stock</th>
+                        <th>Stock mínimo</th>
+                        <th>Categoría</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${lowStockProducts}">
+                        <td th:text="${producto.nombre}">Pan</td>
+                        <td th:text="${producto.stock}">2</td>
+                        <td th:text="${producto.stockMinimo}">5</td>
+                        <td th:text="${producto.categoria}">Panadería</td>
+                    </tr>
+                    <tr th:if="${lowStockProducts.size()} == 0">
+                        <td colspan="4" class="text-center">No se encontraron productos con stock bajo.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Detalle del Pedido')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-start mb-4 gap-3">
+            <div>
+                <h2>Pedido <span class="text-primary" th:text="${pedido.id}">#000001</span></h2>
+                <span class="badge bg-secondary" th:text="${pedido.fechaRegistro}">2026-01-01 10:00:00</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEditarPedido">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </button>
+                <a class="btn btn-danger"
+                   th:href="@{/admin/eliminarPedido/{id}(id=${pedido.id})}"
+                   onclick="return confirm('¿Estás seguro de ELIMINAR este pedido?\nEsta acción es irreversible.')">
+                    <i class="fas fa-trash me-2"></i>Eliminar
+                </a>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/pedidos}">Volver</a>
+            </div>
+        </div>
+
+        <div class="row gy-4">
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm h-100">
+                    <div class="card-header fw-bold bg-light">
+                        <i class="fas fa-user me-2"></i>Datos del Cliente
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${pedido.clienteNombre} + ' ' + pedido.clienteApellidos">Nombre Cliente</h5>
+                        <hr>
+                        <p class="mb-1"><strong>Empresa:</strong> <span th:text="${pedido.razonSocial != null ? pedido.razonSocial : 'Particular'}">Particular</span></p>
+                        <p class="mb-1"><strong>RUC:</strong> <span th:text="${pedido.clienteRuc != null ? pedido.clienteRuc : 'N/A'}">N/A</span></p>
+                        <p class="mb-1"><strong>Teléfono:</strong> <a th:href="${'tel:' + pedido.clienteTelefono}" th:text="${pedido.clienteTelefono}">987654321</a></p>
+                        <p class="mb-0"><strong>Email:</strong> <a th:href="${'mailto:' + pedido.clienteEmail}" th:text="${pedido.clienteEmail}">cliente@example.com</a></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm h-100">
+                    <div class="card-header fw-bold bg-light">
+                        <i class="fas fa-truck me-2"></i>Logística
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="text-muted small">Estado Actual:</label><br>
+                            <span class="badge"
+                                  th:classappend="${pedido.estado == 'PENDIENTE_PAGO' ? ' bg-warning text-dark' : pedido.estado == 'PAGADO' ? ' bg-info text-dark' : pedido.estado == 'EN_PREPARACION' ? ' bg-primary' : pedido.estado == 'LISTO_PARA_RECOJO' ? ' bg-secondary' : pedido.estado == 'EN_CAMINO' ? ' bg-dark' : pedido.estado == 'ENTREGADO' ? ' bg-success' : pedido.estado == 'CANCELADO' ? ' bg-danger' : ''}"
+                                  th:text="${pedido.estado}">PENDIENTE_PAGO</span>
+                        </div>
+
+                        <p class="mb-1"><strong>Fecha Entrega:</strong> <span th:text="${pedido.fechaEntrega != null ? pedido.fechaEntrega : '-'}">2026-06-01</span></p>
+                        <p class="mb-1"><strong>Tipo:</strong> <span th:text="${pedido.tipoEntrega}">DOMICILIO</span></p>
+
+                        <div class="alert alert-light border mt-2" th:if="${pedido.tipoEntrega == 'DOMICILIO'}">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            <span th:text="${pedido.calle}">Calle Falsa</span> #<span th:text="${pedido.numero}">123</span><br>
+                            <small class="text-muted" th:text="${pedido.distritoNombre}">Distrito</small>
+                            <div th:if="${pedido.referencia != null}"><small class="text-muted">(Ref: <span th:text="${pedido.referencia}"></span>)</small></div>
+                        </div>
+                        <div class="alert alert-light border mt-2" th:if="${pedido.tipoEntrega != 'DOMICILIO'}">
+                            <i class="fas fa-store text-warning"></i> Recojo en tienda
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <i class="fas fa-box-open me-2"></i>Contenido del Pedido
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">P. Unitario</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${detalles}">
+                                <td>
+                                    <img th:if="${item.foto != null}" th:src="@{/images/productos/{foto}(foto=${item.foto})}" width="40" class="rounded me-2"/>
+                                    <span th:text="${item.nombre}">Nombre Producto</span>
+                                </td>
+                                <td class="text-center fw-bold" th:text="${item.cantidad}">1</td>
+                                <td class="text-end" th:text="${item.precioUnitario}">S/ 0.00</td>
+                                <td class="text-end" th:text="${item.subtotal}">S/ 0.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-white">
+                            <tr>
+                                <td colspan="3" class="text-end">Subtotal Productos:</td>
+                                <td class="text-end" th:text="${pedido.subtotalProductos}">S/ 0.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Costo Envío:</td>
+                                <td class="text-end" th:text="${pedido.costoEnvio}">S/ 0.00</td>
+                            </tr>
+                            <tr class="fs-5 table-active border-top border-dark">
+                                <td colspan="3" class="text-end fw-bold">TOTAL:</td>
+                                <td class="text-end text-success fw-bold" th:text="${pedido.costoTotal}">S/ 0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalEditarPedido" tabindex="-1">
+            <div class="modal-dialog">
+                <form method="post" th:action="@{/admin/actualizarPedido}">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Administrar Pedido</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id_pedido" th:value="${pedido.id}" />
+                            <div class="mb-3">
+                                <label class="form-label">Estado del Pedido</label>
+                                <select name="estado" class="form-select" required>
+                                    <option value="PENDIENTE_PAGO" th:selected="${pedido.estado == 'PENDIENTE_PAGO'}">PENDIENTE DE PAGO</option>
+                                    <option value="PAGADO" th:selected="${pedido.estado == 'PAGADO'}">PAGADO / CONFIRMADO</option>
+                                    <option value="EN_PREPARACION" th:selected="${pedido.estado == 'EN_PREPARACION'}">EN PRODUCCIÓN</option>
+                                    <option value="LISTO_PARA_RECOJO" th:selected="${pedido.estado == 'LISTO_PARA_RECOJO'}">LISTO PARA RECOJO</option>
+                                    <option value="EN_CAMINO" th:selected="${pedido.estado == 'EN_CAMINO'}">EN CAMINO (Delivery)</option>
+                                    <option value="ENTREGADO" th:selected="${pedido.estado == 'ENTREGADO'}">ENTREGADO (Finalizado)</option>
+                                    <option value="CANCELADO" th:selected="${pedido.estado == 'CANCELADO'}">CANCELADO</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha Entrega</label>
+                                    <input type="date" name="fecha_entrega" class="form-control" th:attr="value=${pedido.fechaEntrega != null ? pedido.fechaEntrega : null}" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

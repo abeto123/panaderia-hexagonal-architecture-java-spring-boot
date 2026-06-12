@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Cliente')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 th:text="${cliente != null ? 'Editar Cliente' : 'Nuevo Cliente'}">Cliente</h3>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${cliente != null ? '/admin/clientes/' + cliente.id : '/admin/clientes'}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <div class="mb-3">
+                                <label for="nombres" class="form-label">Nombres</label>
+                                <input type="text" class="form-control" id="nombres" name="nombres" th:value="${cliente != null ? cliente.nombres : ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apellidos" class="form-label">Apellidos</label>
+                                <input type="text" class="form-control" id="apellidos" name="apellidos" th:value="${cliente != null ? cliente.apellidos : ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" th:value="${cliente != null ? cliente.email : ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono" name="telefono" th:value="${cliente != null ? cliente.telefono : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="ruc" class="form-label">RUC</label>
+                                <input type="text" class="form-control" id="ruc" name="ruc" th:value="${cliente != null and cliente.ruc != null ? cliente.ruc.valor : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="razonSocial" class="form-label">Razón Social</label>
+                                <input type="text" class="form-control" id="razonSocial" name="razonSocial" th:value="${cliente != null and cliente.razonSocial != null ? cliente.razonSocial.valor : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="rol" class="form-label">Rol</label>
+                                <select class="form-select" id="rol" name="rol">
+                                    <option th:value="CLIENTE" th:selected="${cliente == null || cliente.rol == null || cliente.rol.name() == 'CLIENTE'}">CLIENTE</option>
+                                    <option th:value="ADMIN" th:selected="${cliente != null && cliente.rol != null && cliente.rol.name() == 'ADMIN'}">ADMIN</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                            <a class="btn btn-secondary" th:href="@{/admin/clientes}">Cancelar</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>
