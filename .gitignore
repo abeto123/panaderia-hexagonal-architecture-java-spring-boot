@@ -1,8 +1,11 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+.mvn/
+build/
 !**/src/main/**/target/
 !**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 ### STS ###
 .apt_generated
@@ -25,9 +28,44 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
+
+### SEGURIDAD - Credenciales y Secretos ###
+.env
+.env.local
+.env.*.local
+credentials.json
+secrets.json
+application-prod*.properties
+application-dev-postgresql.properties
+
+### Archivos de Sistema ###
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo
+*~
+
+### Caches & Temporales ###
+*.class
+.cache/
+.gradle/
+*.jar
+!mvnw
+!.mvn/wrapper/maven-wrapper.jar
+
+### Node (si aplica en futuro) ###
+node_modules/
+npm-debug.log
+
+### IDE Adicionales ###
+.eclipse
+.project
+.sts4-cache/
+.DS_Store/eclipse-workspace/
+.classpath.bak

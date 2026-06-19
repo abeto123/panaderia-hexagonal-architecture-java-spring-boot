@@ -24,7 +24,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/loginPage", "/registro", "/registro/**", "/productos", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/cliente/**").hasAnyRole("CLIENTE", "ADMIN")
                 .anyRequest().authenticated()
             )
@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
             )
+            .csrf(csrf -> csrf.disable()) // NOTA: En producción usar .ignoringRequestMatchers solo para API
             .userDetailsService(userDetailsService);
 
         return http.build();
