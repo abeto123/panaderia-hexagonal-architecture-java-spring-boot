@@ -18,7 +18,7 @@ INSERT INTO distrito(nombre, id_provincia) VALUES
 INSERT INTO sede(nombre, telefono, id_empresa, id_distrito) VALUES
 ('Sede Principal Natividad', '988954525', 1, 1);
 
-INSERT INTO cliente(
+INSERT ignore INTO cliente(
   nombre,
   apellidos,
   email,
