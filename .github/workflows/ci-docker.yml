@@ -36,7 +36,7 @@ jobs:
         git config --global user.name "GitHub Actions"
         git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/abeto123/gitops-panaderia.git
         cd gitops-panaderia
-        sed -i "s|image: .*panaderia-app:.*|image: albeert151/panaderia-app:${{ steps.version.outputs.VERSION }}|g" k8s/desarrollo/deployment.yaml
+        sed -i "s|image: .*|image: albeert151/panaderia-app:${{ steps.version.outputs.VERSION }}|g" k8s/desarrollo/deployment.yaml
         git add k8s/desarrollo/deployment.yaml
         git commit -m "ci: actualizar imagen a ${{ steps.version.outputs.VERSION }}"
         git push
