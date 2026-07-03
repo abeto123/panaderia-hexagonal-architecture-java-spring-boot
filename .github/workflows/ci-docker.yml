@@ -1,0 +1,42 @@
+name: CI - Build and Version
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Generar versión SemVer
+      id: version
+      run: |
+        VERSION="v1.0.${{ github.run_number }}"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Versión generada: $VERSION"
+
+    - name: Login a Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build y Push imagen Docker
+      run: |
+        docker build -t albeert151/panaderia-app:${{ steps.version.outputs.VERSION }} .
+        docker push albeert151/panaderia-app:${{ steps.version.outputs.VERSION }}
+
+    - name: Actualizar versión en GitOps Repo
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/abeto123/gitops-panaderia.git
+        cd gitops-panaderia
+        sed -i "s|image: .*panaderia-app:.*|image: albeert151/panaderia-app:${{ steps.version.outputs.VERSION }}|g" k8s/desarrollo/deployment.yaml
+        git add k8s/desarrollo/deployment.yaml
+        git commit -m "ci: actualizar imagen a ${{ steps.version.outputs.VERSION }}"
+        git push
