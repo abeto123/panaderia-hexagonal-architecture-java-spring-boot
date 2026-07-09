@@ -1,24 +1,24 @@
 SET NAMES utf8;
 
-INSERT INTO empresa(nombre, ruc) VALUES
+INSERT  IGNORE INTO empresa(nombre, ruc) VALUES
 ('Panaderia y Pasteleria Barrios', '10004847356');
 
-INSERT INTO departamento(nombre) VALUES
+INSERT  IGNORE INTO departamento(nombre) VALUES
 ('Tacna');
 
-INSERT INTO provincia(nombre, id_departamento) VALUES
+INSERT  IGNORE INTO provincia(nombre, id_departamento) VALUES
 ('Tacna', 1);
 
-INSERT INTO distrito(nombre, id_provincia) VALUES
+INSERT  IGNORE INTO distrito(nombre, id_provincia) VALUES
 ('Tacna', 1),
 ('Ciudad Nueva', 1),
 ('Pocollay', 1),
 ('Cnel. Gregorio Albarracin', 1);
 
-INSERT INTO sede(nombre, telefono, id_empresa, id_distrito) VALUES
+INSERT  IGNORE INTO sede(nombre, telefono, id_empresa, id_distrito) VALUES
 ('Sede Principal Natividad', '988954525', 1, 1);
 
-INSERT ignore INTO cliente(
+INSERT  IGNORE INTO cliente(
   nombre,
   apellidos,
   email,
@@ -49,7 +49,7 @@ INSERT ignore INTO cliente(
   'Abarrote alberto'
 );
 
-INSERT INTO direccion(
+INSERT  IGNORE INTO direccion(
   calle,
   numero,
   referencia,
@@ -66,7 +66,7 @@ INSERT INTO direccion(
   1
 );
 
-INSERT INTO zona_disponible_envio(
+INSERT  IGNORE INTO zona_disponible_envio(
   id_sede,
   id_distrito,
   costo_envio,
@@ -77,7 +77,7 @@ INSERT INTO zona_disponible_envio(
 (1, 3, 12.00, 75.00),
 (1, 4, 15.00, 75.00);
 
-INSERT INTO categoria(nombre) VALUES
+INSERT  IGNORE INTO categoria(nombre) VALUES
 ('Panes Salados'),
 ('Panes Dulces'),
 ('Panes Integrales'),
@@ -85,7 +85,7 @@ INSERT INTO categoria(nombre) VALUES
 ('Pastelería y Repostería'),
 ('Packs y Ofertas');
 
-INSERT INTO producto(
+INSERT  IGNORE INTO producto(
   nombre,
   descripcion,
   foto,
@@ -163,7 +163,7 @@ INSERT INTO producto(
   5
 );
 
-INSERT INTO carrito (id_cliente)
+INSERT  IGNORE INTO carrito (id_cliente)
 SELECT id_cliente
 FROM cliente
 WHERE id_cliente NOT IN (

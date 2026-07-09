@@ -1,13 +1,10 @@
 package com.panaderia.ecommerce.catalog.infrastructure.jpa;
 
 import com.panaderia.ecommerce.catalog.domain.Categoria;
-import com.panaderia.ecommerce.catalog.domain.Precio;
 import com.panaderia.ecommerce.catalog.domain.Producto;
-import com.panaderia.ecommerce.catalog.domain.Stock;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.Currency;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
