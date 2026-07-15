@@ -271,6 +271,14 @@ INSERT IGNORE INTO producto(
 
 
 -- =====================================================
+-- COMPRA MÍNIMA POR PRODUCTO
+-- La marraqueta se vende barata por unidad, así que se exige
+-- un pedido mínimo de 75 unidades. El resto de productos queda en 1 (por defecto).
+-- =====================================================
+
+UPDATE producto SET compra_minima = 75 WHERE nombre = 'Marraqueta Tacneña';
+
+-- =====================================================
 -- CREAR CARRITOS AUTOMÁTICAMENTE
 -- =====================================================
 

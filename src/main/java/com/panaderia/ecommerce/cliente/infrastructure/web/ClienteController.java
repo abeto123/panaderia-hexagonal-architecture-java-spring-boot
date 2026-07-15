@@ -94,7 +94,7 @@ public class ClienteController {
     public String listarDirecciones(Model model, Authentication authentication) {
         Cliente actual = clienteActual(authentication);
         List<Map<String, Object>> direcciones = jdbcTemplate.queryForList(
-                "SELECT d.id_direccion AS id, d.alias, d.calle, d.numero, COALESCE(dist.nombre, '') AS distrito, d.referencia " +
+                "SELECT d.id_direccion AS id, d.alias, d.calle, d.numero, COALESCE(dist.nombre, '') AS distrito, d.referencia, d.id_distrito AS idDistrito " +
                         "FROM direccion d LEFT JOIN distrito dist ON d.id_distrito = dist.id_distrito WHERE d.id_cliente = ? " +
                         "ORDER BY d.id_direccion",
                 actual.getId());
@@ -123,6 +123,45 @@ public class ClienteController {
             redirectAttributes.addFlashAttribute("success", "Dirección agregada correctamente");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "No se pudo agregar la dirección: " + e.getMessage());
+        }
+        return "redirect:/cliente/direcciones";
+    }
+
+    @GetMapping("/direcciones/{dirId}")
+    @ResponseBody
+    public Map<String, Object> obtenerDireccion(@PathVariable Long dirId, Authentication authentication) {
+        Cliente actual = clienteActual(authentication);
+        List<Map<String, Object>> filas = jdbcTemplate.queryForList(
+                "SELECT d.id_direccion AS id, d.alias, d.calle, d.numero, d.referencia, d.id_distrito AS idDistrito " +
+                        "FROM direccion d WHERE d.id_direccion = ? AND d.id_cliente = ?",
+                dirId, actual.getId());
+        if (filas.isEmpty()) {
+            throw new IllegalArgumentException("Dirección no encontrada");
+        }
+        return filas.get(0);
+    }
+
+    @PostMapping("/direcciones/{dirId}/editar")
+    public String editarDireccion(@PathVariable Long dirId,
+                                   @RequestParam(required = false) String alias,
+                                   @RequestParam String calle,
+                                   @RequestParam(required = false) String numero,
+                                   @RequestParam(required = false) Long id_distrito,
+                                   @RequestParam(required = false) String referencia,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            Cliente actual = clienteActual(authentication);
+            int filas = jdbcTemplate.update(
+                    "UPDATE direccion SET alias = ?, calle = ?, numero = ?, referencia = ?, id_distrito = ? " +
+                            "WHERE id_direccion = ? AND id_cliente = ?",
+                    alias, calle, numero, referencia, id_distrito, dirId, actual.getId());
+            if (filas == 0) {
+                throw new IllegalArgumentException("Dirección no encontrada");
+            }
+            redirectAttributes.addFlashAttribute("success", "Dirección actualizada correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo actualizar la dirección: " + e.getMessage());
         }
         return "redirect:/cliente/direcciones";
     }

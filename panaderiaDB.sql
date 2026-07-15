@@ -109,6 +109,7 @@ CREATE TABLE producto (
   foto VARCHAR(255),
   precio DECIMAL(10,2),
   stock_minimo INT DEFAULT 0, -- lo minimo que se puede llevar un cliente,
+  compra_minima INT NOT NULL DEFAULT 1, -- cantidad minima por pedido para este producto
   disponible BOOLEAN DEFAULT TRUE,
   id_categoria INT,
   FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE CASCADE

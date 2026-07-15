@@ -122,17 +122,33 @@
 
                                     </p>
 
-                                    <div class="d-grid">
+                                    <p class="min-qty-text" th:if="${comprasMinimas.get(producto.id) != null and comprasMinimas.get(producto.id) > 1}">
+                                        <i class="fas fa-box"></i>
+                                        Compra mínima: <span th:text="${comprasMinimas.get(producto.id)}">1</span> unidades
+                                    </p>
 
-                                        <button class="btn btn-primary add-cart-btn"
-                                                th:data-producto-id="${producto.id}">
+                                    <div class="d-grid" sec:authorize="hasRole('CLIENTE')">
 
-                                            <i class="fas fa-shopping-cart"></i>
-                                            Agregar al carrito
-
-                                        </button>
+                                        <form th:action="@{/cliente/carrito/agregar}" method="post" class="d-flex gap-2 mb-2">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <input type="hidden" name="productoId" th:value="${producto.id}" />
+                                            <input type="number" name="cantidad" class="form-control form-control-sm"
+                                                   th:min="${comprasMinimas.get(producto.id) != null ? comprasMinimas.get(producto.id) : 1}"
+                                                   th:value="${comprasMinimas.get(producto.id) != null ? comprasMinimas.get(producto.id) : 1}"
+                                                   style="width:90px;" />
+                                            <button type="submit" class="btn btn-primary add-cart-btn flex-grow-1"
+                                                    th:disabled="${producto.stock.cantidad <= 0 or !producto.disponible}">
+                                                <i class="fas fa-shopping-cart"></i>
+                                                Agregar
+                                            </button>
+                                        </form>
 
                                     </div>
+
+                                    <div class="d-grid" sec:authorize="!isAuthenticated()">
+                                        <a class="btn btn-outline-primary" th:href="@{/loginPage}">Inicia sesión para comprar</a>
+                                    </div>
+
 
                                 </div>
 
@@ -153,7 +169,7 @@
     <style>
 
         body{
-            background:#f5f6fa;
+            background:var(--panaderia-cream, #fff8ef);
         }
 
         .category-card{
@@ -168,7 +184,7 @@
         }
 
         .category-link:hover{
-            color:#0d6efd;
+            color:var(--panaderia-primary, #b5651d);
             padding-left:5px;
         }
 
@@ -202,13 +218,19 @@
         .price-text{
             font-size:1.2rem;
             font-weight:bold;
-            color:#0d6efd;
+            color:var(--panaderia-primary, #b5651d);
             margin-bottom:5px;
         }
 
         .stock-text{
             color:#718093;
             font-size:0.9rem;
+        }
+
+        .min-qty-text{
+            color:var(--panaderia-primary-dark, #8f4f16);
+            font-size:0.85rem;
+            font-weight:600;
         }
 
         .add-cart-btn{

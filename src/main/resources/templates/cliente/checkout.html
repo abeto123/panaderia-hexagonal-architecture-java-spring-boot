@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Confirmar Pedido')"></head>
+<body class="bg-light">
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container py-4 mb-5">
+        <h1 class="fw-bold mb-4">Confirmar Pedido</h1>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="row">
+            <div class="col-md-7 mb-4">
+                <div class="card panaderia-card">
+                    <div class="card-header"><i class="fas fa-truck"></i> Datos de entrega</div>
+                    <div class="card-body">
+                        <form th:action="@{/cliente/checkout}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de entrega</label>
+                                <select name="tipo_entrega" id="tipo_entrega" class="form-select" required>
+                                    <option value="RECOJO_TIENDA">Recojo en tienda</option>
+                                    <option value="DOMICILIO">Delivery a domicilio</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="direccion-group">
+                                <label class="form-label">Dirección de entrega</label>
+                                <select name="id_direccion" class="form-select">
+                                    <option value="">-- Selecciona una dirección --</option>
+                                    <option th:each="dir : ${direcciones}" th:value="${dir.id}"
+                                            th:text="${(dir.alias != null and dir.alias != '' ? dir.alias + ' - ' : '') + dir.calle + ' ' + dir.numero + ', ' + dir.distrito}">
+                                        Dirección
+                                    </option>
+                                </select>
+                                <div class="form-text" th:if="${#lists.isEmpty(direcciones)}">
+                                    No tienes direcciones registradas. <a th:href="@{/cliente/direcciones}">Agrega una aquí</a>.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de entrega</label>
+                                <input type="date" name="fecha_entrega" class="form-control" th:min="${fechaMinima}" required />
+                                <div class="form-text">La entrega más próxima disponible es a partir de mañana.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Comprobante</label>
+                                <select name="tipo_comprobante" class="form-select">
+                                    <option value="BOLETA">Boleta</option>
+                                    <option value="FACTURA" th:if="${cliente.ruc != null}">Factura</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100">Confirmar Pedido</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card panaderia-card">
+                    <div class="card-header"><i class="fas fa-receipt"></i> Resumen del pedido</div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between" th:each="item : ${items}">
+                            <span th:text="${item.nombre} + ' x' + ${item.cantidad}">Producto x1</span>
+                            <span th:text="'S/ ' + ${item.subtotal}">S/ 0.00</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between fw-bold total-row">
+                            <span>Total</span>
+                            <span th:text="'S/ ' + ${total}">S/ 0.00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tipo = document.getElementById('tipo_entrega');
+            var grupo = document.getElementById('direccion-group');
+            function toggle() {
+                grupo.style.display = tipo.value === 'DOMICILIO' ? 'block' : 'none';
+            }
+            tipo.addEventListener('change', toggle);
+            toggle();
+        });
+    </script>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>
+

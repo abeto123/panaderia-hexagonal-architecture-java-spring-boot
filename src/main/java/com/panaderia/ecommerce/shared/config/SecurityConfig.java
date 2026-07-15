@@ -24,8 +24,10 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/loginPage", "/registro", "/registro/**", "/productos", "/productos/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/acceso-denegado").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/admin/**").permitAll()
+                .requestMatchers("/api/geo/**").hasAnyRole("CLIENTE", "ADMIN")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/cliente/**").hasAnyRole("CLIENTE", "ADMIN")
                 .anyRequest().authenticated()
             )
@@ -40,6 +42,9 @@ public class SecurityConfig {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .accessDeniedPage("/acceso-denegado")
             )
             .userDetailsService(userDetailsService);
 

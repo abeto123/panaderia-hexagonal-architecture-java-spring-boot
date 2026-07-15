@@ -43,6 +43,21 @@ public class ComprobanteService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * getOrDefault() de Map SOLO devuelve el valor por defecto cuando la clave no existe.
+     * Aquí las claves siempre existen (se insertan con map.put aunque el valor de la BD sea NULL),
+     * así que hay que comprobar explícitamente el null para no romper con NullPointerException.
+     */
+    private static String str(Map<String, Object> map, String key, String defaultValue) {
+        Object value = map.get(key);
+        return value != null ? value.toString() : defaultValue;
+    }
+
+    private static BigDecimal decimal(Map<String, Object> map, String key, BigDecimal defaultValue) {
+        Object value = map.get(key);
+        return value instanceof BigDecimal ? (BigDecimal) value : defaultValue;
+    }
+
     public byte[] generarComprobante(Long pedidoId, String tipoComprobante) throws IOException {
         Optional<Map<String, Object>> pedidoOpt = loadPedidoCompleto(pedidoId);
         if (pedidoOpt.isEmpty()) {
@@ -117,23 +132,23 @@ public class ComprobanteService {
         clientTable.setWidth(500);
         clientTable.addCell(new Cell().add(new Paragraph("Nombre/Razón Social:")).setBold());
         clientTable.addCell(new Cell().add(new Paragraph(
-                (String) pedido.getOrDefault("clienteNombre", "") + " " + 
-                (String) pedido.getOrDefault("clienteApellidos", ""))));
+                str(pedido, "clienteNombre", "") + " " +
+                str(pedido, "clienteApellidos", ""))));
         
-        String razonSocial = (String) pedido.get("razonSocial");
-        if (razonSocial != null && !razonSocial.isEmpty()) {
+        String razonSocial = str(pedido, "razonSocial", "");
+        if (!razonSocial.isEmpty()) {
             clientTable.addCell(new Cell().add(new Paragraph("Empresa:")).setBold());
             clientTable.addCell(new Cell().add(new Paragraph(razonSocial)));
         }
 
-        String ruc = (String) pedido.getOrDefault("clienteRuc", "");
+        String ruc = str(pedido, "clienteRuc", "");
         if (!ruc.isEmpty()) {
             clientTable.addCell(new Cell().add(new Paragraph("RUC/DNI:")).setBold());
             clientTable.addCell(new Cell().add(new Paragraph(ruc)));
         }
 
         clientTable.addCell(new Cell().add(new Paragraph("Teléfono:")).setBold());
-        clientTable.addCell(new Cell().add(new Paragraph((String) pedido.getOrDefault("clienteTelefono", ""))));
+        clientTable.addCell(new Cell().add(new Paragraph(str(pedido, "clienteTelefono", ""))));
 
         document.add(clientTable);
         document.add(new Paragraph("").setMarginBottom(10));
@@ -154,16 +169,16 @@ public class ComprobanteService {
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))));
 
         orderTable.addCell(new Cell().add(new Paragraph("Tipo de Entrega:")).setBold());
-        orderTable.addCell(new Cell().add(new Paragraph((String) pedido.getOrDefault("tipoEntrega", ""))));
+        orderTable.addCell(new Cell().add(new Paragraph(str(pedido, "tipoEntrega", ""))));
 
         orderTable.addCell(new Cell().add(new Paragraph("Fecha Entrega:")).setBold());
-        orderTable.addCell(new Cell().add(new Paragraph((String) pedido.getOrDefault("fechaEntrega", "-"))));
+        orderTable.addCell(new Cell().add(new Paragraph(str(pedido, "fechaEntrega", "-"))));
 
         document.add(orderTable);
         document.add(new Paragraph("").setMarginBottom(10));
 
         // Dirección de entrega
-        String tipoEntrega = (String) pedido.get("tipoEntrega");
+        String tipoEntrega = str(pedido, "tipoEntrega", "");
         if ("DOMICILIO".equals(tipoEntrega)) {
             document.add(new Paragraph("DIRECCIÓN DE ENTREGA")
                     .setFontSize(11)
@@ -172,17 +187,15 @@ public class ComprobanteService {
 
             Table dirTable = new Table(1);
             dirTable.setWidth(500);
-            String direccion = (String) pedido.getOrDefault("calle", "") + " #" + 
-                             (String) pedido.getOrDefault("numero", "");
+            String direccion = str(pedido, "calle", "") + " #" + str(pedido, "numero", "");
             dirTable.addCell(new Cell().add(new Paragraph(direccion)));
             
-            String referencia = (String) pedido.get("referencia");
-            if (referencia != null && !referencia.isEmpty()) {
+            String referencia = str(pedido, "referencia", "");
+            if (!referencia.isEmpty()) {
                 dirTable.addCell(new Cell().add(new Paragraph("Referencia: " + referencia)));
             }
             
-            dirTable.addCell(new Cell().add(new Paragraph("Distrito: " + 
-                    pedido.getOrDefault("distritoNombre", ""))));
+            dirTable.addCell(new Cell().add(new Paragraph("Distrito: " + str(pedido, "distritoNombre", ""))));
 
             document.add(dirTable);
             document.add(new Paragraph("").setMarginBottom(10));
@@ -213,8 +226,8 @@ public class ComprobanteService {
         document.add(new Paragraph("").setMarginBottom(10));
 
         // Totales
-        BigDecimal subtotal = (BigDecimal) pedido.get("subtotalProductos");
-        BigDecimal costoEnvio = (BigDecimal) pedido.getOrDefault("costoEnvio", BigDecimal.ZERO);
+        BigDecimal subtotal = decimal(pedido, "subtotalProductos", BigDecimal.ZERO);
+        BigDecimal costoEnvio = decimal(pedido, "costoEnvio", BigDecimal.ZERO);
         BigDecimal igv = subtotal.multiply(IGV_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal totalConIGV = subtotal.add(igv).add(costoEnvio).setScale(2, RoundingMode.HALF_UP);
 
