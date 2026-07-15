@@ -1,55 +1,248 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="fragments/header :: head('Registro')"></head>
-<body>
+
+<body class="bg-light">
+
     <nav th:replace="fragments/header :: navbar"></nav>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
+    <div class="container">
+
+        <div class="row justify-content-center align-items-center min-vh-100">
+
             <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Registro de Cliente</h3>
-                    </div>
-                    <div class="card-body">
+
+                <div class="card register-card shadow-lg border-0">
+
+                    <div class="card-body p-5">
+
+                        <div class="text-center mb-4">
+
+                            <div class="register-icon mb-3">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+
+                            <h2 class="fw-bold">
+                                Crear Cuenta
+                            </h2>
+
+                            <p class="text-muted">
+                                ¡Regístrate para comenzar!
+                            </p>
+
+                        </div>
+
                         <form th:action="@{/registro}" method="post">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                            <input type="hidden"
+                                   th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}" />
+
                             <div class="mb-3">
-                                <label for="nombres" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="nombres" name="nombres" required>
+
+                                <label for="nombres"
+                                       class="form-label fw-semibold">
+
+                                    Nombres
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       id="nombres"
+                                       name="nombres"
+                                       placeholder="Ingresa tus nombres"
+                                       required>
+
                             </div>
+
                             <div class="mb-3">
-                                <label for="apellidos" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="apellidos" name="apellidos" required>
+
+                                <label for="apellidos"
+                                       class="form-label fw-semibold">
+
+                                    Apellidos
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       id="apellidos"
+                                       name="apellidos"
+                                       placeholder="Ingresa tus apellidos"
+                                       required>
+
                             </div>
+
                             <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+
+                                <label for="email"
+                                       class="form-label fw-semibold">
+
+                                    Email
+
+                                </label>
+
+                                <input type="email"
+                                       class="form-control custom-input"
+                                       id="email"
+                                       name="email"
+                                       placeholder="correo@ejemplo.com"
+                                       required>
+
                             </div>
+
                             <div class="mb-3">
-                                <label for="telefono" class="form-label">Teléfono</label>
-                                <input type="text" class="form-control" id="telefono" name="telefono">
+
+                                <label for="telefono"
+                                       class="form-label fw-semibold">
+
+                                    Teléfono
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       id="telefono"
+                                       name="telefono"
+                                       placeholder="999999999">
+
                             </div>
+
                             <div class="mb-3">
-                                <label for="ruc" class="form-label">RUC (opcional)</label>
-                                <input type="text" class="form-control" id="ruc" name="ruc">
+
+                                <label for="ruc"
+                                       class="form-label fw-semibold">
+
+                                    RUC (opcional)
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       id="ruc"
+                                       name="ruc"
+                                       placeholder="Ingrese su RUC">
+
                             </div>
+
                             <div class="mb-3">
-                                <label for="razonSocial" class="form-label">Razón Social (opcional)</label>
-                                <input type="text" class="form-control" id="razonSocial" name="razonSocial">
+
+                                <label for="razonSocial"
+                                       class="form-label fw-semibold">
+
+                                    Razón Social (opcional)
+
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       id="razonSocial"
+                                       name="razonSocial"
+                                       placeholder="Empresa o negocio">
+
                             </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+
+                            <div class="mb-4">
+
+                                <label for="password"
+                                       class="form-label fw-semibold">
+
+                                    Contraseña
+
+                                </label>
+
+                                <input type="password"
+                                       class="form-control custom-input"
+                                       id="password"
+                                       name="password"
+                                       placeholder="********"
+                                       required
+                                       minlength="6">
+
                             </div>
-                            <button type="submit" class="btn btn-primary">Registrarse</button>
+
+                            <div class="d-grid mb-3">
+
+                                <button type="submit"
+                                        class="btn btn-primary register-btn">
+
+                                    Registrarse
+
+                                </button>
+
+                            </div>
+
                         </form>
+
+                        <div class="text-center">
+
+                            <a th:href="@{/login}"
+                               class="login-link">
+
+                                ¿Ya tienes cuenta? Inicia sesión
+
+                            </a>
+
+                        </div>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
+    <style>
+
+        body{
+            background:#f5f6fa;
+        }
+
+        .register-card{
+            border-radius:22px;
+        }
+
+        .register-icon{
+            font-size:70px;
+            color:#0d6efd;
+        }
+
+        .custom-input{
+            border-radius:12px;
+            padding:12px;
+            border:1px solid #dcdde1;
+        }
+
+        .custom-input:focus{
+            box-shadow:none;
+            border-color:#0d6efd;
+        }
+
+        .register-btn{
+            border-radius:12px;
+            padding:12px;
+            font-weight:600;
+        }
+
+        .login-link{
+            text-decoration:none;
+            font-weight:500;
+        }
+
+        .login-link:hover{
+            text-decoration:underline;
+        }
+
+    </style>
+
     <footer th:replace="fragments/footer :: footer"></footer>
+
 </body>
+
 </html>

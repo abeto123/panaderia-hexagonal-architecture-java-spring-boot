@@ -1,8 +1,10 @@
 package com.panaderia.ecommerce.cliente.infrastructure.jpa;
 
 import com.panaderia.ecommerce.cliente.domain.Cliente;
+import com.panaderia.ecommerce.cliente.domain.Direccion;
 import com.panaderia.ecommerce.cliente.domain.RazonSocial;
 import com.panaderia.ecommerce.cliente.domain.Ruc;
+import com.panaderia.ecommerce.autenticacion.domain.Rol;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -9,6 +9,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.annotation.security.PermitAll;
 
 import java.util.List;
 
@@ -21,6 +24,18 @@ public class ProductoController {
     public ProductoController(ProductoService productoService, CategoriaService categoriaService) {
         this.productoService = productoService;
         this.categoriaService = categoriaService;
+    }
+
+    @GetMapping("/test-categorias")
+    @ResponseBody
+    @PermitAll
+    public java.util.Map<String, Object> testCategorias() {
+        List<Categoria> categorias = categoriaService.listarCategorias();
+        return java.util.Map.of(
+            "total_count", categorias.size(),
+            "unique_count", categorias.stream().map(Categoria::getNombre).distinct().count(),
+            "categorias", categorias
+        );
     }
 
     @GetMapping

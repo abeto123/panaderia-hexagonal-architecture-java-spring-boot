@@ -1,68 +1,243 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head th:replace="fragments/header :: head('Panel de Administración')"></head>
-<body>
+
+<body class="bg-light">
+
     <nav th:replace="fragments/header :: navbar"></nav>
 
-    <div class="container py-4">
-        <h2 class="mb-4"><i class="fas fa-cogs me-2"></i>Panel de Administración</h2>
+    <div class="container py-5">
 
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card text-white bg-primary mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Productos</h5>
-                        <p class="card-text display-4" th:text="${totalProductos}">0</p>
-                        <a th:href="@{/admin/gestionProductos}" class="text-white">Gestionar <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-success mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Clientes</h5>
-                        <p class="card-text display-4" th:text="${totalClientes}">0</p>
-                        <a th:href="@{/admin/gestionClientes}" class="text-white">Ver lista <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-warning mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Pedidos Activos</h5>
-                        <p class="card-text display-4" th:text="${pedidosEnProceso}">0</p>
-                        <a th:href="@{/admin/gestionPedidos}" class="text-white">Atender <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
+        <!-- TITULO -->
+        <div class="mb-5">
+            <h2 class="fw-bold">
+                <i class="fas fa-cogs me-2 text-primary"></i>
+                Panel de Administración
+            </h2>
+
+            <p class="text-muted">
+                Gestiona productos, clientes y pedidos de la panadería.
+            </p>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-clipboard-list fa-3x text-secondary mb-3"></i>
-                        <h4>Hoja de Producción</h4>
-                        <p>Generar lista de panes a hornear para mañana.</p>
-                        <a th:href="@{/admin/hojaProduccion}" class="btn btn-outline-dark">Ver Hoja</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100 border-success">
-                    <div class="card-body text-center">
-                        <i class="fas fa-cash-register fa-3x text-success mb-3"></i>
-                        <h4>Caja / Nuevo Pedido</h4>
-                        <p>Crear pedido manual para un cliente.</p>
-                        <a th:href="@{/admin/nuevoPedido}" class="btn btn-success w-100">
-                            <i class="fas fa-plus me-2"></i> Crear Pedido
+        <!-- TARJETAS -->
+        <div class="row g-4 mb-5">
+
+            <!-- PRODUCTOS -->
+            <div class="col-md-4">
+
+                <div class="card bg-primary text-white shadow h-100 dashboard-card">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <h5 class="card-title">
+                                    Productos
+                                </h5>
+
+                                <p class="dashboard-number"
+                                   th:text="${totalProductos}">
+                                    0
+                                </p>
+                            </div>
+
+                            <i class="fas fa-box-open dashboard-icon"></i>
+
+                        </div>
+
+                        <a th:href="@{/admin/gestionProductos}"
+                           class="btn btn-light btn-sm rounded-pill px-3">
+
+                            Gestionar
+
                         </a>
+
                     </div>
+
                 </div>
+
             </div>
+
+            <!-- CLIENTES -->
+            <div class="col-md-4">
+
+                <div class="card bg-success text-white shadow h-100 dashboard-card">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <h5 class="card-title">
+                                    Clientes
+                                </h5>
+
+                                <p class="dashboard-number"
+                                   th:text="${totalClientes}">
+                                    0
+                                </p>
+                            </div>
+
+                            <i class="fas fa-users dashboard-icon"></i>
+
+                        </div>
+
+                        <a th:href="@{/admin/gestionClientes}"
+                           class="btn btn-light btn-sm rounded-pill px-3">
+
+                            Ver Lista
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- PEDIDOS -->
+            <div class="col-md-4">
+
+                <div class="card bg-warning text-dark shadow h-100 dashboard-card">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <h5 class="card-title">
+                                    Pedidos Activos
+                                </h5>
+
+                                <p class="dashboard-number"
+                                   th:text="${pedidosEnProceso}">
+                                    0
+                                </p>
+                            </div>
+
+                            <i class="fas fa-shopping-cart dashboard-icon"></i>
+
+                        </div>
+
+                        <a th:href="@{/admin/gestionPedidos}"
+                           class="btn btn-dark btn-sm rounded-pill px-3">
+
+                            Atender
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
+
+        <!-- ACCIONES -->
+        <div class="row g-4">
+
+            <!-- PRODUCCION -->
+            <div class="col-md-6">
+
+                <div class="card shadow-sm h-100 dashboard-card">
+
+                    <div class="card-body text-center p-5">
+
+                        <i class="fas fa-clipboard-list fa-3x text-secondary mb-4"></i>
+
+                        <h4 class="fw-bold">
+                            Hoja de Producción
+                        </h4>
+
+                        <p class="text-muted mb-4">
+                            Generar lista de panes para producción.
+                        </p>
+
+                        <a th:href="@{/admin/hojaProduccion}"
+                           class="btn btn-outline-dark rounded-pill px-4">
+
+                            Ver Hoja
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- NUEVO PEDIDO -->
+            <div class="col-md-6">
+
+                <div class="card shadow-sm h-100 border-success dashboard-card">
+
+                    <div class="card-body text-center p-5">
+
+                        <i class="fas fa-cash-register fa-3x text-success mb-4"></i>
+
+                        <h4 class="fw-bold">
+                            Caja / Nuevo Pedido
+                        </h4>
+
+                        <p class="text-muted mb-4">
+                            Crear pedidos manuales para clientes.
+                        </p>
+
+                        <a th:href="@{/admin/nuevoPedido}"
+                           class="btn btn-success rounded-pill px-4">
+
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Pedido
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
+    <!-- ESTILOS -->
+    <style>
+
+        body{
+            background:#f5f6fa;
+        }
+
+        .dashboard-card{
+            border:none;
+            border-radius:18px;
+            transition:0.25s;
+        }
+
+        .dashboard-card:hover{
+            transform:translateY(-4px);
+        }
+
+        .dashboard-icon{
+            font-size:42px;
+            opacity:0.85;
+        }
+
+        .dashboard-number{
+            font-size:48px;
+            font-weight:700;
+            margin:10px 0;
+        }
+
+    </style>
+
     <footer th:replace="fragments/footer :: footer"></footer>
+
 </body>
+
 </html>

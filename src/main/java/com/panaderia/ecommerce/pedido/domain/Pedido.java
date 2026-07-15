@@ -1,5 +1,6 @@
 package com.panaderia.ecommerce.pedido.domain;
 
+import com.panaderia.ecommerce.cliente.domain.Cliente;
 import com.panaderia.ecommerce.cliente.domain.Direccion;
 
 import java.math.BigDecimal;

@@ -67,6 +67,17 @@ public class ClienteService {
         return clienteRepository.save(clienteActualizado);
     }
 
+    public void cambiarPassword(String email, String passwordActual, String passwordNueva) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        if (!passwordEncoder.matches(passwordActual, usuario.getPasswordHash())) {
+            throw new IllegalArgumentException("La contraseña actual no es correcta");
+        }
+        Usuario actualizado = new Usuario(usuario.getId(), usuario.getEmail(),
+                passwordEncoder.encode(passwordNueva), usuario.getRol(), usuario.getClienteId());
+        usuarioRepository.save(actualizado);
+    }
+
     public Cliente crearClienteConUsuario(String nombres, String apellidos, String email, 
                                            String telefono, String ruc, String razonSocial, String password) {
         // Verificar que el email no existe

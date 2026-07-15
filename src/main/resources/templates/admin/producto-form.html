@@ -7,7 +7,7 @@
     <div class="container mt-4">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card border-0 shadow-lg rounded-4">
                     <div class="card-header">
                         <h3 th:text="${producto != null ? 'Editar Producto' : 'Nuevo Producto'}">Producto</h3>
                     </div>
@@ -85,5 +85,30 @@
             });
         })();
     </script>
+
+            <style>
+
+        body{
+            background:#f4f7fb;
+        }
+
+        .card{
+            transition:0.3s ease;
+        }
+
+        .card:hover{
+            transform:translateY(-8px);
+        }
+
+        .btn{
+            border-radius:14px;
+            font-weight:600;
+        }
+
+        .navbar{
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        </style>
 </body>
 </html>
