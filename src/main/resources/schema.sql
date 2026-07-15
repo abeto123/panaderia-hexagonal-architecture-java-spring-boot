@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS producto (
   moneda VARCHAR(3) DEFAULT 'PEN',
   categoria VARCHAR(50),
   stock_minimo INT DEFAULT 0,
+  compra_minima INT NOT NULL DEFAULT 1,
   disponible BOOLEAN DEFAULT TRUE,
   id_categoria INT,
   FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria) ON DELETE CASCADE

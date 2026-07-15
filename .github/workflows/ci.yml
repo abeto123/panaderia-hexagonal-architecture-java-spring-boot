@@ -1,20 +1,27 @@
 name: MVP Continuous Integration
 
-# Permisos necesarios para que el workflow pueda actualizar el repo (commit del log)
-permissions:
-  contents: write
-
 on:
   pull_request:
-    branches:
-      - main
-  push:
     branches:
       - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: PanaderiaBarriosDB
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -33,6 +40,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2-
+
+      - name: Import DB schema
+        run: mysql -h 127.0.0.1 -u root < panaderiaDB.sql
 
       - name: Build and run tests
         run: mvn clean verify
@@ -62,64 +72,3 @@ jobs:
         with:
           name: scm-status-report
           path: scm-status-report.json
-
-  publish-scm-log:
-    # Only run this job on a push to main (i.e. after a successful merge)
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    needs: build-and-test
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Create or update scm-status-report.json with PR metadata
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const sha = context.sha;
-
-            // Try to find the PR that produced this merge commit
-            const { data: prs } = await github.rest.pulls.list({ owner, repo, state: 'closed', per_page: 100 });
-            const pr = prs.find(p => p.merge_commit_sha === sha);
-
-            const entry = {
-              pr: pr ? pr.number : null,
-              title: pr ? pr.title : null,
-              merged_by: pr && pr.merged_by ? pr.merged_by.login : null,
-              merged_at: pr ? pr.merged_at : new Date().toISOString(),
-              commit: sha,
-              author: pr ? pr.user.login : null,
-              branch: pr ? pr.head.ref : null,
-              timestamp: new Date().toISOString()
-            };
-
-            const path = 'scm-status-report.json';
-            try {
-              // Read existing file (if any)
-              const { data: fileData } = await github.rest.repos.getContent({ owner, repo, path });
-              const content = Buffer.from(fileData.content, 'base64').toString();
-              let current = JSON.parse(content);
-              if (!Array.isArray(current)) current = [current];
-              current.push(entry);
-              const newContent = Buffer.from(JSON.stringify(current, null, 2)).toString('base64');
-              await github.rest.repos.createOrUpdateFileContents({
-                owner, repo, path, message: `chore(scm): add status for PR ${entry.pr || sha}`,
-                content: newContent, sha: fileData.sha, branch: 'main'
-              });
-              console.log('scm-status-report.json updated');
-            } catch (e) {
-              // File does not exist -> create it
-              const newContent = Buffer.from(JSON.stringify([entry], null, 2)).toString('base64');
-              await github.rest.repos.createOrUpdateFileContents({
-                owner, repo, path, message: `chore(scm): create scm-status-report with PR ${entry.pr || sha}`,
-                content: newContent, branch: 'main'
-              });
-              console.log('scm-status-report.json created');
-            }
-
-            

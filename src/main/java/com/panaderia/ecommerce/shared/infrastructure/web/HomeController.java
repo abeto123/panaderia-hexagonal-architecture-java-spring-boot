@@ -27,4 +27,9 @@ public class HomeController {
 
         return "redirect:/productos";
     }
+
+    @GetMapping("/acceso-denegado")
+    public String accesoDenegado() {
+        return "error/acceso-denegado";
+    }
 }

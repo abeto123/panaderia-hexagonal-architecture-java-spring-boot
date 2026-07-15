@@ -23,7 +23,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/login", "/loginPage", "/registro", "/registro/**", "/productos", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/loginPage", "/registro", "/registro/**", "/productos", "/productos/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/acceso-denegado").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/geo/**").hasAnyRole("CLIENTE", "ADMIN")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/cliente/**").hasAnyRole("CLIENTE", "ADMIN")
                 .anyRequest().authenticated()
@@ -40,7 +43,9 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable()) // NOTA: En producción usar .ignoringRequestMatchers solo para API
+            .exceptionHandling(exceptions -> exceptions
+                .accessDeniedPage("/acceso-denegado")
+            )
             .userDetailsService(userDetailsService);
 
         return http.build();

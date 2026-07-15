@@ -7,7 +7,7 @@
     <div class="container mt-4">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card border-0 shadow-lg rounded-4">
                     <div class="card-header">
                         <h3 th:text="${producto != null ? 'Editar Producto' : 'Nuevo Producto'}">Producto</h3>
                     </div>
@@ -39,6 +39,12 @@
                             <div class="mb-3">
                                 <label for="stock" class="form-label">Stock</label>
                                 <input type="number" class="form-control" id="stock" name="stock" th:value="${producto != null ? producto.stock.cantidad : ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="compraMinima" class="form-label">Cantidad mínima de compra</label>
+                                <input type="number" min="1" class="form-control" id="compraMinima" name="compraMinima"
+                                       th:value="${compraMinimaActual != null ? compraMinimaActual : 1}" required>
+                                <div class="form-text">Cantidad mínima que el cliente debe llevar de este producto por pedido (ej. 75 para la Marraqueta).</div>
                             </div>
                             <div class="mb-3">
                                 <label for="disponible" class="form-label">Disponibilidad</label>
@@ -85,5 +91,30 @@
             });
         })();
     </script>
+
+            <style>
+
+        body{
+            background:#f4f7fb;
+        }
+
+        .card{
+            transition:0.3s ease;
+        }
+
+        .card:hover{
+            transform:translateY(-8px);
+        }
+
+        .btn{
+            border-radius:14px;
+            font-weight:600;
+        }
+
+        .navbar{
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        </style>
 </body>
 </html>

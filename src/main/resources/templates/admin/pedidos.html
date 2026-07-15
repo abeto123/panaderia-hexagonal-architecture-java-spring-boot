@@ -4,7 +4,7 @@
 <body>
     <nav th:replace="fragments/header :: navbar"></nav>
 
-    <div class="container py-4">
+    <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="mb-1"><i class="fas fa-receipt me-2"></i>Gestión de Pedidos</h2>
@@ -13,12 +13,16 @@
             <a class="btn btn-outline-secondary" th:href="@{/admin}">Volver al Dashboard</a>
         </div>
 
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-4 shadow-lg border-0 rounded-4">
             <div class="card-body">
                 <form th:action="@{/admin/pedidos}" method="get" class="row g-3 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label">Fecha de Entrega</label>
-                        <input type="date" name="fecha" class="form-control" th:value="${fecha}" />
+                   <input type="date"
+                          id="fecha"
+                          name="fecha"
+                        class="form-control shadow-sm"
+                         th:value="${fecha}" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Estado</label>
@@ -44,8 +48,8 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle shadow-sm bg-white rounded">
-                <thead class="table-dark">
+            <table class="table table-hover align-middle shadow-lg bg-white rounded-4 overflow-hidden">
+                <thead style="background:#111827; color:white;">
                     <tr>
                         <th>ID</th>
                         <th>Cliente</th>
@@ -87,13 +91,13 @@
                                 <a class="btn btn-outline-primary" th:href="@{/admin/detallePedido/{id}(id=${pedido.id})}" title="Ver Detalles">
                                     <i class="fas fa-eye me-1"></i>Ver
                                 </a>
-                                <button type="button" class="btn btn-outline-dark btn-estado"
+                                <button type="button" class="btn btn-dark rounded-pill px-3 btn-estado"
                                         th:data-pedido-id="${pedido.id}"
                                         th:data-pedido-estado="${pedido.estado}"
                                         title="Cambiar Estado">
                                     <i class="fas fa-sync-alt me-1"></i>Estado
                                 </button>
-                                <a class="btn btn-outline-danger" th:href="@{/admin/eliminarPedido/{id}(id=${pedido.id})}"
+                                <a class="btn btn-danger rounded-pill px-3" th:href="@{/admin/eliminarPedido/{id}(id=${pedido.id})}"
                                    onclick="return confirm('¿Estás seguro de eliminar este pedido? Esta acción no se puede deshacer.')"
                                    title="Eliminar Pedido">
                                     <i class="fas fa-trash me-1"></i>Eliminar
@@ -136,6 +140,37 @@
     </div>
     
     <style>
+
+        body{
+            background:#f4f6f9;
+        }
+
+        .card{
+            border:none;
+            border-radius:18px;
+            transition:0.3s ease;
+        }
+
+        .card:hover{
+            transform:translateY(-4px);
+            box-shadow:0 12px 30px rgba(0,0,0,0.12);
+        }
+
+        .btn{
+            border-radius:12px;
+            font-weight:600;
+            transition:0.2s;
+        }
+
+        .btn:hover{
+            transform:scale(1.03);
+        }
+
+        .table{
+            border-radius:16px;
+            overflow:hidden;
+            background:white;
+        }
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -151,12 +186,14 @@
         
         .modal-content {
             background-color: white;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
             width: 90%;
             max-width: 500px;
             display: flex;
             flex-direction: column;
+            border:none;
+            overflow:hidden;
         }
         
         .modal-header {
@@ -165,6 +202,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background:#111827;
+            color:white;
         }
         
         .modal-header h5 {
@@ -231,6 +270,21 @@
                 });
             });
         });
+
+        // RESTRICCIÓN FECHA
+const inputFecha = document.getElementById('fecha');
+
+if(inputFecha){
+
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+
+    const yyyy = manana.getFullYear();
+    const mm = String(manana.getMonth() + 1).padStart(2, '0');
+    const dd = String(manana.getDate()).padStart(2, '0');
+
+    inputFecha.min = `${yyyy}-${mm}-${dd}`;
+}
     </script>
 
     <footer th:replace="fragments/footer :: footer"></footer>

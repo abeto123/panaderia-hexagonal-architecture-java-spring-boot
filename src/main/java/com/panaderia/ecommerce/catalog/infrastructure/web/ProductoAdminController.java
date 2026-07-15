@@ -68,6 +68,7 @@ public class ProductoAdminController {
                                @RequestParam Long categoriaId,
                                @RequestParam BigDecimal precio,
                                @RequestParam Integer stock,
+                               @RequestParam(required = false, defaultValue = "1") Integer compraMinima,
                                @RequestParam(required = false) MultipartFile imagen,
                                @RequestParam(required = false, defaultValue = "false") Boolean disponible,
                                RedirectAttributes redirectAttributes) {
@@ -81,7 +82,9 @@ public class ProductoAdminController {
                 imagenUrl = guardarImagen(imagen);
             }
             
-            productoService.crearProducto(nombre, descripcion, categoria, precioVO, stockVO, disponible != null && disponible, imagenUrl);
+            Producto guardado = productoService.crearProducto(nombre, descripcion, categoria, precioVO, stockVO, disponible != null && disponible, imagenUrl);
+            jdbcTemplate.update("UPDATE producto SET compra_minima = ? WHERE id_producto = ?",
+                    compraMinima == null || compraMinima < 1 ? 1 : compraMinima, guardado.getId());
             redirectAttributes.addFlashAttribute("success", "Producto creado exitosamente");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al crear producto: " + e.getMessage());
@@ -92,8 +95,12 @@ public class ProductoAdminController {
     @GetMapping({"/{id}/editar", "/{id}"})
     public String editarProductoForm(@PathVariable Long id, Model model) {
         Producto producto = productoService.obtenerProducto(id).orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
+        List<Integer> compraMinimaList = jdbcTemplate.query(
+                "SELECT compra_minima FROM producto WHERE id_producto = ?",
+                new Object[]{id}, (rs, rowNum) -> rs.getInt(1));
         model.addAttribute("producto", producto);
         model.addAttribute("categorias", categoriaService.listarCategorias());
+        model.addAttribute("compraMinimaActual", compraMinimaList.isEmpty() ? 1 : compraMinimaList.get(0));
         return "admin/producto-form";
     }
 
@@ -104,6 +111,7 @@ public class ProductoAdminController {
                                     @RequestParam Long categoriaId,
                                     @RequestParam BigDecimal precio,
                                     @RequestParam Integer stock,
+                                    @RequestParam(required = false, defaultValue = "1") Integer compraMinima,
                                     @RequestParam(required = false) MultipartFile imagen,
                                     @RequestParam(required = false, defaultValue = "false") Boolean disponible,
                                     RedirectAttributes redirectAttributes) {
@@ -120,6 +128,8 @@ public class ProductoAdminController {
             }
             
             productoService.editarProducto(id, nombre, descripcion, categoria, precioVO, stockVO, disponible != null && disponible, imagenUrl);
+            jdbcTemplate.update("UPDATE producto SET compra_minima = ? WHERE id_producto = ?",
+                    compraMinima == null || compraMinima < 1 ? 1 : compraMinima, id);
             redirectAttributes.addFlashAttribute("success", "Producto actualizado exitosamente");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al actualizar producto: " + e.getMessage());

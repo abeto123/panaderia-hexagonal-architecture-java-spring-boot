@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head('Mis Pedidos')"></head>
+<body>
+    <nav th:replace="fragments/header :: navbar"></nav>
+
+    <div class="container mt-4 mb-5">
+        <h1 class="mb-4">Mis Pedidos</h1>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div th:if="${#lists.isEmpty(pedidos)}" class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <p class="mb-3">Todavía no tienes pedidos.</p>
+                <a class="btn btn-primary" th:href="@{/productos}">Ir al catálogo</a>
+            </div>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(pedidos)}" class="card border-0 shadow-sm">
+            <div class="card-body">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Pedido #</th>
+                            <th>Fecha</th>
+                            <th>Entrega</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${pedidos}">
+                            <td th:text="${p.id}">1</td>
+                            <td th:text="${p.fechaRegistro}">-</td>
+                            <td th:text="${p.fechaEntrega}">-</td>
+                            <td th:text="${p.tipoEntrega}">-</td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${p.estado}">PENDIENTE</span>
+                            </td>
+                            <td>S/ <span th:text="${p.total}">0.00</span></td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary" th:href="@{'/cliente/pedidos/' + ${p.id}}">Ver detalle</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>
